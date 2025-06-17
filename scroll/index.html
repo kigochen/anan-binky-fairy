@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動繪本：啵啵！狗狗郵差來送信！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm & Gentle Neutrals -->
+    <!-- Application Structure Plan: A vertical, long-scroll storybook format. The cover page invites the user to start, which then scrolls them to the main content. Each story 'scene' is a dedicated section with a two-column layout (image and text side-by-side), which stacks vertically on mobile. Image and text positions alternate on desktop to create a dynamic reading flow. This structure was chosen to better emulate a physical picture book reading experience, allowing users to scroll at their own pace. -->
+    <!-- Visualization & Content Choices: Report Info: The 5-part story of An-an. -> Goal: Present a story in a classic, scrollable book format. -> Viz/Presentation Method: Alternating two-column grid layouts for each scene. A modal is used for the card to maintain a 'discovery' element within the flow. -> Interaction: A 'start' button scrolls the user into the story. A button within the fourth scene triggers the interactive card modal. -> Justification: This layout is highly intuitive and provides a clear, linear narrative path that is both engaging and easy to navigate on any device. -> Library/Method: Vanilla JS for dynamic content rendering and interaction, Tailwind CSS for the responsive layout. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FFFBF5;
+            color: #5D4037;
+        }
+        .story-section {
+            min-height: 80vh;
+        }
+        .card-modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-[#FFFBF5]">
+
+    <main id="app" class="w-full">
+
+        <div id="cover-page" class="flex flex-col items-center justify-center h-screen text-center p-4">
+            <h1 class="text-4xl md:text-6xl font-bold text-[#795548] mb-4">啵啵！狗狗郵差來送信！</h1>
+            <p class="text-xl text-gray-600 mb-8">一個關於長大與新朋友的溫暖故事</p>
+            <button id="start-button" class="bg-[#FFAB91] text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-[#F48A6A] transition-transform transform hover:scale-105">
+                開始閱讀
+            </button>
+        </div>
+
+        <div id="story-content-wrapper" class="bg-white">
+            <div id="story-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            </div>
+        </div>
+
+    </main>
+    
+    <div id="card-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="card-modal-content bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] p-8 rounded-2xl shadow-xl max-w-md w-full text-center relative border-4 border-yellow-300">
+            <div id="modal-image-container" class="mb-4"></div>
+            <p id="modal-text" class="text-xl md:text-2xl text-[#8D6E63] leading-loose"></p>
+            <button id="close-modal-button" class="absolute -top-4 -right-4 bg-red-400 text-white h-10 w-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white text-xl font-bold">&times;</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const storyData = [
+                {
+                    image: 'images/Gemini_1.png',
+                    text: '天黑黑，要睏睏了。\n\n媽咪抱著安安說：「我的小寶貝安安，你長好高、好棒了耶！你的嘴嘴要去坐小飛機，飛去給更小的北鼻當好朋友囉！」\n\n爸比拿來一個亮晶晶的小盒子，上面有好多小星星。\n\n安安看一看、摸一摸，然後把他的嘴嘴「啵！」一聲，親了一下，輕輕地放進盒子裡。\n\n他們把小盒子放在門口。「晚安，小嘴嘴！」安安跟它揮揮手。'
+                },
+                {
+                    image: 'images/Gemini_2.png',
+                    text: '夜裡，是誰「叩叩叩」地來了呢？\n\n原來是嘴嘴仙子派來的狗狗郵差！牠有毛茸茸的耳朵、搖搖擺擺的尾巴，悄悄地把小盒子啣走，又悄悄地放下了另一個小禮物。'
+                },
+                {
+                    image: 'images/Gemini_3.png',
+                    text: '「叮咚！」太陽公公上班了！\n\n安安醒來，馬上跑到門口。\n\n「咦？我的盒子呢？」\n\n地上有一個小小的、可愛的腳印，像蓋印章一樣「啪！」的一聲印在那裡。\n\n腳印旁邊，有一個用彩色點點紙包起來的禮物！'
+                },
+                {
+                    image: 'images/Gemini_4.png',
+                    text: '「哇！」安安把禮物抱得緊緊的，跑去找爸比媽咪。\n\n大家一起拆開禮物，裡面跳出一隻軟綿綿、笑瞇瞇的小狗狗！牠的脖子上還有一個小鈴鐺，搖一搖會「鈴鈴鈴！」地響。\n\n禮物裡還有一張小卡片，上面畫著漂亮的仙子和一隻吐著舌頭的狗狗。',
+                    hasCard: true
+                },
+                {
+                    image: 'images/Gemini_5.png',
+                    text: '安安抱著新的狗狗朋友，好開心！\n\n雖然嘴嘴去旅行了，但安安有了一個新的、會「鈴鈴鈴」響的好朋友。安安真的長大了！'
+                }
+            ];
+
+            const cardData = {
+                imageHtml: '<div class="text-5xl mb-4">💌</div>',
+                text: '「給最棒的安安：謝謝你的嘴嘴！我是你的新朋友，以後換我陪你玩喔！ 汪汪！」<br><br><span class="text-base block mt-4">- 嘴嘴仙子和你的狗狗朋友 敬上</span>'
+            }
+
+            const startButton = document.getElementById('start-button');
+            const storyContentWrapper = document.getElementById('story-content-wrapper');
+            const storyContent = document.getElementById('story-content');
+            
+            const cardModal = document.getElementById('card-modal');
+            const modalImageContainer = document.getElementById('modal-image-container');
+            const modalText = document.getElementById('modal-text');
+            const closeModalButton = document.getElementById('close-modal-button');
+
+            function renderStory() {
+                let storyHTML = '';
+                storyData.forEach((scene, index) => {
+                    const textHTML = scene.text.replace(/\n/g, '<br>');
+                    const imageOrderClass = index % 2 === 0 ? 'md:order-1' : 'md:order-2';
+                    const textOrderClass = index % 2 === 0 ? 'md:order-2' : 'md:order-1';
+
+                    let cardButtonHTML = '';
+                    if(scene.hasCard) {
+                        cardButtonHTML = `
+                            <div class="text-center mt-6">
+                                <button id="open-card-button" class="bg-[#81D4FA] text-white font-bold py-2 px-6 rounded-full shadow-md hover:bg-[#4FC3F7] transition-transform transform hover:scale-105">
+                                    ✨ 點我打開小卡片 ✨
+                                </button>
+                            </div>`;
+                    }
+
+                    storyHTML += `
+                        <section class="story-section grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center py-12 md:py-20">
+                            <div class="${imageOrderClass} flex justify-center items-center">
+                                <img src="${scene.image}" alt="故事插圖第 ${index + 1} 頁" class="rounded-lg shadow-xl max-h-[60vh] object-contain">
+                            </div>
+                            <div class="${textOrderClass}">
+                                <p class="text-lg md:text-xl leading-relaxed whitespace-pre-line">${scene.text}</p>
+                                ${cardButtonHTML}
+                            </div>
+                        </section>
+                    `;
+                    if (index < storyData.length - 1) {
+                         storyHTML += '<hr class="border-t-2 border-dashed border-gray-300">';
+                    }
+                });
+                storyContent.innerHTML = storyHTML;
+
+                const openCardButton = document.getElementById('open-card-button');
+                if (openCardButton) {
+                    openCardButton.addEventListener('click', () => {
+                        modalImageContainer.innerHTML = cardData.imageHtml;
+                        modalText.innerHTML = cardData.text;
+                        cardModal.classList.remove('hidden');
+                    });
+                }
+            }
+
+            startButton.addEventListener('click', () => {
+                const storyElement = document.getElementById('story-content-wrapper');
+                storyElement.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            closeModalButton.addEventListener('click', () => {
+                cardModal.classList.add('hidden');
+            });
+
+            cardModal.addEventListener('click', (e) => {
+                 if (e.target === cardModal) {
+                    cardModal.classList.add('hidden');
+                }
+            });
+
+            renderStory();
+        });
+    </script>
+</body>
+</html>
