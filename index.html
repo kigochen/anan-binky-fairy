@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互動繪本：啵啵！狗狗郵差來送信！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm & Gentle Neutrals -->
+    <!-- Application Structure Plan: A single-view, full-screen interactive storybook. The user navigates through scenes using 'Previous' and 'Next' buttons. Each scene presents an illustration and its corresponding text. Subtle animations and a clickable element (the card in the final scene) are added to enhance engagement. This structure was chosen to create an intuitive, immersive, and child-friendly narrative experience that mimics reading a picture book but with delightful digital interactions. -->
+    <!-- Visualization & Content Choices: Report Info: The 4-part story of An-an. -> Goal: Tell an engaging, linear story. -> Viz/Presentation Method: A sequence of large images paired with legible text blocks, navigated by clear buttons. A modal is used for the final card to create a sense of discovery. -> Interaction: Button clicks for navigation, hover effects for subtle feedback, and a click-to-reveal modal. -> Justification: This approach is simple, intuitive for children, and focuses attention on the narrative and illustrations, enhancing the story's emotional impact. -> Library/Method: Vanilla JS for state management and DOM manipulation, Tailwind CSS for styling. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FFFBF5;
+            color: #5D4037;
+        }
+        .storybook-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 700px;
+        }
+        .nav-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-button:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .nav-button:disabled {
+            background-color: #D7CCC8;
+            cursor: not-allowed;
+        }
+        .card-modal-content {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .twinkle-star {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: yellow;
+            border-radius: 50%;
+            animation: twinkle 1.5s infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-[#FFFBF5] flex items-center justify-center min-h-screen p-4">
+
+    <main id="app" class="w-full max-w-4xl text-center">
+
+        <div id="cover-page" class="flex flex-col items-center justify-center h-screen">
+            <h1 class="text-4xl md:text-6xl font-bold text-[#795548] mb-4">啵啵！狗狗郵差來送信！</h1>
+            <p class="text-xl text-gray-600 mb-8">一個關於長大與新朋友的溫暖故事</p>
+            <button id="start-button" class="bg-[#FFAB91] text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-[#F48A6A] transition-transform transform hover:scale-105">
+                開始閱讀
+            </button>
+        </div>
+
+        <div id="storybook-view" class="hidden">
+            <div class="storybook-container bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col mx-auto">
+                <div id="image-container" class="w-full h-3/5 md:h-2/3 flex-shrink-0 relative bg-gray-100">
+                    <img id="scene-image" src="" alt="故事插圖" class="w-full h-full object-contain transition-opacity duration-500 ease-in-out">
+                </div>
+                <div class="p-4 md:p-6 flex-grow flex flex-col justify-between overflow-y-auto">
+                    <p id="scene-text" class="text-lg md:text-xl text-left leading-relaxed"></p>
+                    <div id="card-interaction" class="hidden text-center mt-4">
+                        <button id="open-card-button" class="bg-[#81D4FA] text-white font-bold py-2 px-6 rounded-full shadow-md hover:bg-[#4FC3F7] transition-transform transform hover:scale-105">
+                            ✨ 點我打開小卡片 ✨
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center items-center gap-8 mt-6">
+                <button id="prev-button" class="nav-button bg-[#A1887F] text-white p-4 rounded-full shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div id="page-indicator" class="text-lg font-medium text-gray-600"></div>
+                <button id="next-button" class="nav-button bg-[#A1887F] text-white p-4 rounded-full shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+        </div>
+
+    </main>
+    
+    <div id="card-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden">
+        <div class="card-modal-content bg-gradient-to-br from-[#FFFDE7] to-[#FFF9C4] p-8 rounded-2xl shadow-xl max-w-md w-full text-center relative border-4 border-yellow-300">
+            <div id="modal-image-container" class="mb-4"></div>
+            <p id="modal-text" class="text-xl md:text-2xl text-[#8D6E63] leading-loose"></p>
+            <button id="close-modal-button" class="absolute -top-4 -right-4 bg-red-400 text-white h-10 w-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white text-xl font-bold">&times;</button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const storyData = [
+                {
+                    image: 'file://uploaded:Gemini_1.png-7d12aa0c-7054-4660-ab10-ffdf74be36d4',
+                    text: '天黑黑，要睏睏了。\n\n媽咪抱著安安說：「我的小寶貝安安，你長好高、好棒了耶！你的嘴嘴要去坐小飛機，飛去給更小的北鼻當好朋友囉！」\n\n爸比拿來一個亮晶晶的小盒子，上面有好多小星星。\n\n安安看一看、摸一摸，然後把他的嘴嘴「啵！」一聲，親了一下，輕輕地放進盒子裡。\n\n他們把小盒子放在門口。「晚安，小嘴嘴！」安安跟它揮揮手。'
+                },
+                {
+                    image: 'file://uploaded:Gemini_2.png-4394a4d9-50dc-42f3-9a1f-6936e5f56309',
+                    text: '夜裡，是誰「叩叩叩」地來了呢？\n\n原來是嘴嘴仙子派來的狗狗郵差！牠有毛茸茸的耳朵、搖搖擺擺的尾巴，悄悄地把小盒子啣走，又悄悄地放下了另一個小禮物。'
+                },
+                {
+                    image: 'file://uploaded:Gemini_3.png-79cb7614-1d6f-4d8e-aa4c-36721357ef37',
+                    text: '「叮咚！」太陽公公上班了！\n\n安安醒來，馬上跑到門口。\n\n「咦？我的盒子呢？」\n\n地上有一個小小的、可愛的腳印，像蓋印章一樣「啪！」的一聲印在那裡。\n\n腳印旁邊，有一個用彩色點點紙包起來的禮物！'
+                },
+                {
+                    image: 'file://uploaded:Gemini_4.png-8e0d91cb-9111-4372-816a-e9148b49f399',
+                    text: '「哇！」安安把禮物抱得緊緊的，跑去找爸比媽咪。\n\n大家一起拆開禮物，裡面跳出一隻軟綿綿、笑瞇瞇的小狗狗！牠的脖子上還有一個小鈴鐺，搖一搖會「鈴鈴鈴！」地響。'
+                }
+            ];
+
+            const cardData = {
+                imageHtml: '<div class="text-5xl mb-4">💌</div>',
+                text: '「給最棒的安安：謝謝你的嘴嘴！我是你的新朋友，以後換我陪你玩喔！ 汪汪！」<br><br><span class="text-base block mt-4">- 嘴嘴仙子和你的狗狗朋友 敬上</span>'
+            }
+
+            let currentScene = 0;
+
+            const coverPage = document.getElementById('cover-page');
+            const storybookView = document.getElementById('storybook-view');
+            const startButton = document.getElementById('start-button');
+            
+            const sceneImage = document.getElementById('scene-image');
+            const sceneText = document.getElementById('scene-text');
+            const prevButton = document.getElementById('prev-button');
+            const nextButton = document.getElementById('next-button');
+            const pageIndicator = document.getElementById('page-indicator');
+            const cardInteraction = document.getElementById('card-interaction');
+            const openCardButton = document.getElementById('open-card-button');
+
+            const cardModal = document.getElementById('card-modal');
+            const modalImageContainer = document.getElementById('modal-image-container');
+            const modalText = document.getElementById('modal-text');
+            const closeModalButton = document.getElementById('close-modal-button');
+
+            function showScene(index) {
+                sceneImage.style.opacity = '0';
+                
+                setTimeout(() => {
+                    const scene = storyData[index];
+                    sceneImage.src = scene.image;
+                    sceneText.innerText = scene.text;
+                    sceneImage.style.opacity = '1';
+
+                    pageIndicator.textContent = `${index + 1} / ${storyData.length}`;
+                    
+                    prevButton.disabled = (index === 0);
+                    nextButton.disabled = (index === storyData.length - 1);
+
+                    if (index === storyData.length - 1) {
+                        cardInteraction.classList.remove('hidden');
+                    } else {
+                        cardInteraction.classList.add('hidden');
+                    }
+
+                }, 300); 
+            }
+
+            startButton.addEventListener('click', () => {
+                coverPage.classList.add('hidden');
+                storybookView.classList.remove('hidden');
+                showScene(currentScene);
+            });
+
+            nextButton.addEventListener('click', () => {
+                if (currentScene < storyData.length - 1) {
+                    currentScene++;
+                    showScene(currentScene);
+                }
+            });
+
+            prevButton.addEventListener('click', () => {
+                if (currentScene > 0) {
+                    currentScene--;
+                    showScene(currentScene);
+                }
+            });
+
+            openCardButton.addEventListener('click', () => {
+                modalImageContainer.innerHTML = cardData.imageHtml;
+                modalText.innerHTML = cardData.text;
+                cardModal.classList.remove('hidden');
+            });
+
+            closeModalButton.addEventListener('click', () => {
+                cardModal.classList.add('hidden');
+            });
+
+            cardModal.addEventListener('click', (e) => {
+                 if (e.target === cardModal) {
+                    cardModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
